@@ -1,0 +1,269 @@
+openapi: 3.0.3
+info:
+  title: Auth API
+  version: 1.0.0
+  description: API for user registration, login, token refresh, logout, forget password, and reset password.
+
+paths:
+  /auth/register:
+    post:
+      summary: User registration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - email
+                - password
+              properties:
+                name:
+                  type: string
+                  description: User's full name
+                  example: "John Doe"
+                email:
+                  type: string
+                  format: email
+                  description: User's email address
+                  example: "john@example.com"
+                password:
+                  type: string
+                  description: User's password
+                  example: "yourStrongPassword123"
+      responses:
+        "201":
+          description: Registration successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "ثبت نام با موفقیت انجام شد."
+                  data:
+                    type: object
+                    properties:
+                      accessToken:
+                        type: string
+                      refreshToken:
+                        type: string
+        "409":
+          description: Email already exists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/login:
+    post:
+      summary: User login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                  description: User's email address
+                  example: "john@example.com"
+                password:
+                  type: string
+                  description: User's password
+                  example: "yourStrongPassword123"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "شما با موفقیت وارد حساب کاربری خود شدید."
+                  data:
+                    type: object
+                    properties:
+                      accessToken:
+                        type: string
+                      refreshToken:
+                        type: string
+        "401":
+          description: Unauthorized - invalid email or password
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden - user restricted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/refresh-accessToken:
+    post:
+      summary: Refresh access token(The refresh token should be sent as an HTTP cookie named `refreshToken`)
+      parameters: []
+      requestBody:
+        description: The refresh token should be sent as an HTTP cookie named `refreshToken`
+        required: false
+        content: {}
+      responses:
+        "200":
+          description: New access token generated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "newAccessTokenString"
+        "401":
+          description: Unauthorized - invalid or missing refresh token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/logout:
+    post:
+      summary: User logout
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Logout successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "شما با موفقیت از حساب کاربری خود خارج شدید."
+        "401":
+          description: Unauthorized - already logged out or session expired
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/forget-password:
+    post:
+      summary: Request password reset link
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+                  format: email
+                  description: User's email to send reset link
+                  example: "john@example.com"
+      responses:
+        "200":
+          description: Reset password link sent
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "لینک فراموشی رمز عبور با موفقیت به ایمیل شما ارسال گردید."
+        "403":
+          description: User restricted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error while sending email
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/reset-password/{token}:
+    post:
+      summary: Reset user password using token
+      parameters:
+        - in: path
+          name: token
+          schema:
+            type: string
+          required: true
+          description: Password reset token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - password
+              properties:
+                password:
+                  type: string
+                  description: New password
+                  example: "newStrongPassword456"
+      responses:
+        "200":
+          description: Password reset successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "رمز عبور شما با موفقیت تغییر کرد."
+        "401":
+          description: Invalid or expired token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "خطا در درخواست"

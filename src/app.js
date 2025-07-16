@@ -9,6 +9,9 @@ const { corsOptions } = require("./middleware/corsOptions");
 const { errorHandler } = require("./middleware/errorHandler");
 const authRoutes = require("./module/auth/v1/auth.routes");
 
+//* Swagger Doc
+const { swaggerUi, swaggerSpec } = require("./utils/swagger.js");
+
 //* Built-in Middlewares
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -19,6 +22,7 @@ app.use(cookieParser());
 //* Import Routes
 
 app.use("/api/v1/auth", authRoutes);
+app.use("/apis/v1/swagger", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 //* 404 Error Handler
 
