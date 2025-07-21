@@ -1,5 +1,5 @@
 const userModel = require("../model/User");
-const { decodeToken } = require("../helper/jwtTokens");
+const { verifyToken } = require("../helper/jwtTokens");
 
 const authGuard = (requiredRoles = []) => {
   return async (req, res, next) => {
@@ -12,7 +12,7 @@ const authGuard = (requiredRoles = []) => {
         });
       }
 
-      const decoded = await decodeToken(token);
+      const decoded = await verifyToken(token, process.env.JWT_SECRET_ACCESS_TOKEN);
 
       const user = await userModel.findById(decoded.id).select("-password");
 

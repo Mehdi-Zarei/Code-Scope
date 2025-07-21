@@ -9,6 +9,7 @@ const frontendPath = path.join(__dirname, "..", "public", "index.html");
 const { corsOptions } = require("./middleware/corsOptions");
 const { errorHandler } = require("./middleware/errorHandler");
 const authRoutes = require("./module/auth/v1/auth.routes");
+const userRoutes = require("./module/user/v1/user.routes.js");
 
 //* Swagger Doc
 const { swaggerUi, swaggerSpec } = require("./utils/swagger.js");
@@ -22,6 +23,7 @@ app.use(express.static(path.join(__dirname, "..", "public")));
 
 //* Import Routes
 app.use("/api/v1/auth", authRoutes);
+app.use("/api/v1/user", userRoutes);
 app.use("/apis/v1/swagger", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 //* 404 handler for API routes (must come BEFORE the SPA catch-all)
