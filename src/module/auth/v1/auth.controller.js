@@ -1,17 +1,11 @@
 const { hashData, comparHashedData } = require("../../../helper/bcrypt");
-
 const { generateAccessToken, generateRefreshToken, verifyToken } = require("../../../helper/jwtTokens");
-
 const { saveData, removeData, saveDataAsHash, getDataAsHash, getData } = require("../../../helper/redis");
-
 const { errorResponse, successResponse } = require("../../../helper/responseMessage");
-
 const User = require("../../../model/User");
-
 const { generateResetPasswordEmail } = require("../../../templates/emailsTemplates");
-
 const { sendEmail } = require("../../../utils/nodemailer");
-
+const { resetPasswordTokenValidator } = require("./auth.validator");
 const uuid = require("uuid").v4;
 
 exports.register = async (req, res, next) => {
@@ -166,6 +160,14 @@ exports.resetPassword = async (req, res, next) => {
   try {
     const { password } = req.body;
     const { token } = req.params;
+
+    const { error } = resetPasswordTokenValidator.validate(req.params);
+    if (error) {
+      return res.status(400).json({
+        message: "خطا در اعتبارسنجی اطلاعات",
+        errors: error.details.map((detail) => detail.message),
+      });
+    }
 
     const storedToken = await getDataAsHash(`resetPasswordToken:${token}`);
     if (!storedToken || storedToken.resetPasswordToken !== token) {
