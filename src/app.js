@@ -10,6 +10,8 @@ const { corsOptions } = require("./middleware/corsOptions");
 const { errorHandler } = require("./middleware/errorHandler");
 const authRoutes = require("./module/auth/v1/auth.routes");
 const userRoutes = require("./module/user/v1/user.routes.js");
+const articleRoutes = require("./module/article/v1/article.route.js");
+const { redirectToArticlePage } = require("./module/article/v1/shortIdentifier.controller.js");
 
 //* Swagger Doc
 const { swaggerUi, swaggerSpec } = require("./utils/swagger.js");
@@ -19,17 +21,19 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors(corsOptions));
 app.use(cookieParser());
-app.use(express.static(path.join(__dirname, "..", "public")));
+app.use("/public", express.static(path.join(__dirname, "..", "public")));
 
 //* Import Routes
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/users", userRoutes);
+app.use("/api/v1/articles", articleRoutes);
+app.get("/api/v1/p/:shortIdentifier", redirectToArticlePage);
 app.use("/apis/v1/swagger", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 //* 404 handler for API routes (must come BEFORE the SPA catch-all)
 app.use((req, res, next) => {
   if (req.originalUrl.startsWith("/api")) {
-    return res.status(404).json({ message: "API route not found" });
+    return res.status(404).json({ message: "صفحه مورد نظر یافت نشد." });
   }
   next();
 });
