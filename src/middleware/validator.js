@@ -6,8 +6,12 @@ const bodyValidator = (schema) => {
       await schema.validateAsync(req.body, { abortEarly: false });
       next();
     } catch (error) {
-      if (req.file) {
-        fs.unlinkSync(`${req.file.destination}/${req.file.filename}`);
+      if (req.files) {
+        req.files.forEach((file) => {
+          fs.unlinkSync(file.path, (err) => {
+            console.error(`❌ خطا در حذف فایل ${path}:`, err.message);
+          });
+        });
       }
       next(error);
     }
