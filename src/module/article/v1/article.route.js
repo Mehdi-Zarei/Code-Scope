@@ -1,7 +1,9 @@
 const express = require("express");
-const authGuard = require("../../../middleware/authGuard");
 const router = express.Router();
+
 //* Middlewares
+const authGuard = require("../../../middleware/authGuard");
+const optionalAuthGuard = require("../../../middleware/optionalAuthGuard");
 
 //* Controller
 const {
@@ -12,17 +14,15 @@ const {
   remove,
   changePublishStatus,
   toggleLikeArticles,
-  redirectToArticlePage,
 } = require("./article.controller");
 
 //* Uploader
 const { multerStorage } = require("../../../utils/multer");
-const { bodyValidator } = require("../../../middleware/validator");
-const { createArticleSchema } = require("./article.validator");
-const optionalAuthGuard = require("../../../middleware/optionalAuthGuard");
 const upload = multerStorage("public/images/articles", 15, [".jpg", ".jpeg"]);
 
 //* Validator
+const { bodyValidator } = require("../../../middleware/validator");
+const { createArticleSchema } = require("./article.validator");
 
 //* Routes
 router
