@@ -49,6 +49,23 @@ exports.create = async (req, res, next) => {
 
 exports.getOne = async (req, res, next) => {
   try {
+    const { commentId } = req.params;
+    if (!isValidObjectId(commentId)) {
+      return errorResponse(res, 409, "شناسه کامنت معتبر نمی باشد.");
+    }
+
+    const mainComment = await Comment.findById(commentId)
+      .populate("articleId", "title")
+      .populate("userId", "name")
+      .populate("parentId", "content")
+      .select("-likes.users")
+      .lean();
+
+    if (!mainComment) {
+      return errorResponse(res, 404, "کامنتی با این شناسه یافت نشد.");
+    }
+
+    return successResponse(res, 200, mainComment);
   } catch (error) {
     next(error);
   }
@@ -101,6 +118,35 @@ exports.remove = async (req, res, next) => {
 
 exports.toggleLikeComment = async (req, res, next) => {
   try {
+    const { commentId } = req.params;
+    const user = req.user;
+    if (!isValidObjectId(commentId)) {
+      return errorResponse(res, 409, "شناسه کامنت معتبر نمی باشد.");
+    }
+
+    const mainComment = await Comment.findById(commentId);
+    if (!mainComment) {
+      return errorResponse(res, 404, "کامنتی با این شناسه یافت نشد.");
+    }
+
+    const hasLike = mainComment.likes.users.includes(user._id);
+
+    let message = "";
+
+    if (hasLike) {
+      await Comment.findByIdAndUpdate(commentId, {
+        $pull: { "likes.users": user._id },
+        $inc: { "likes.count": -1 },
+      });
+      message = "لایک کامنت با موفقیت برداشته شد.";
+    } else {
+      mainComment.likes.count++;
+      mainComment.likes.users.push(user._id);
+      await mainComment.save();
+      message = "کامنت با موفقیت لایک شد.";
+    }
+
+    return successResponse(res, 200, message);
   } catch (error) {
     next(error);
   }
