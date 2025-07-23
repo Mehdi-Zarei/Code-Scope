@@ -85,16 +85,17 @@ const editArticleSchema = Joi.object({
   }),
 
   slug: Joi.string()
-    .pattern(/^[a-z0-9-]+$/)
+    .pattern(/^[\u0600-\u06FFa-zA-Z0-9 ]+$/)
     .messages({
-      "string.pattern.base": "اسلاگ باید فقط شامل حروف کوچک، عدد و خط تیره باشد.",
+      "string.pattern.base":
+        "اسلاگ فقط باید شامل حروف فارسی، انگلیسی و عدد باشد. استفاده از خط تیره یا آندرلاین مجاز نیست.",
     }),
 
   tags: Joi.string().max(30).messages({
     "string.max": "هر برچسب حداکثر ۳۰ کاراکتر باشد.",
   }),
   summery: Joi.string().max(300).allow("").messages({
-    "string.max": "خلاصه نباید بیشتر از ۳۰۰ کاراکتر باشد.",
+    "string.max": "خلاصه مقاله نباید بیشتر از ۳۰۰ کاراکتر باشد.",
   }),
 
   category: Joi.string().max(30).messages({
@@ -115,7 +116,7 @@ const editArticleSchema = Joi.object({
   }),
 
   publishNow: Joi.boolean().messages({
-    "boolean.base": "مقدار انتشار فوری باید بولی باشد.",
+    "boolean.base": "مقدار انتشار فوری باید بولین باشد.",
   }),
 });
 

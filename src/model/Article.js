@@ -60,14 +60,6 @@ const articleSchema = new mongoose.Schema(
       trim: true,
       maxlength: [160, "توضیحات سئو حداکثر باید ۱۶۰ کاراکتر باشد."],
     },
-    reviews: [
-      {
-        user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-        comment: { type: String, required: true },
-        stars: { type: Number, required: true, default: 5 },
-        isAccept: { type: Boolean, required: true, default: false },
-      },
-    ],
   },
 
   { timestamps: true }

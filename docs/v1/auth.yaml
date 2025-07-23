@@ -8,6 +8,8 @@ paths:
   /auth/register:
     post:
       summary: User registration
+      tags:
+        - Auth
       requestBody:
         required: true
         content:
@@ -60,6 +62,8 @@ paths:
   /auth/login:
     post:
       summary: User login
+      tags:
+        - Auth
       requestBody:
         required: true
         content:
@@ -113,6 +117,8 @@ paths:
   /auth/refresh-accessToken:
     post:
       summary: Refresh access token(The refresh token should be sent as an HTTP cookie named `refreshToken`)
+      tags:
+        - Auth
       parameters: []
       requestBody:
         description: The refresh token should be sent as an HTTP cookie named `refreshToken`
@@ -139,6 +145,8 @@ paths:
   /auth/logout:
     post:
       summary: User logout
+      tags:
+        - Auth
       security:
         - bearerAuth: []
       responses:
@@ -162,6 +170,8 @@ paths:
   /auth/forget-password:
     post:
       summary: Request password reset link
+      tags:
+        - Auth
       requestBody:
         required: true
         content:
@@ -209,6 +219,8 @@ paths:
   /auth/reset-password/{token}:
     post:
       summary: Reset user password using token
+      tags:
+        - Auth
       parameters:
         - in: path
           name: token

@@ -117,7 +117,7 @@ exports.getOne = async (req, res, next) => {
       return errorResponse(res, 409, "شناسه مقاله معتبر نمی باشد.");
     }
 
-    const article = await Article.findById(id).populate("author", "name").select("-seoTitle -seoDescription").lean();
+    const article = await Article.findById(id).populate("author", "name").select("-seoTitle -seoDescription");
     if (!article) {
       return errorResponse(res, 404, "مقاله ای یافت نشد");
     }
@@ -128,6 +128,9 @@ exports.getOne = async (req, res, next) => {
 
     const isLiked = article.likes.users?.some((userId) => userId.toString() === req.user._id.toString());
 
+    article.views++;
+    await article.save();
+
     return successResponse(res, 200, { article, isLiked });
   } catch (error) {
     next(error);
@@ -136,6 +139,55 @@ exports.getOne = async (req, res, next) => {
 
 exports.update = async (req, res, next) => {
   try {
+    const { id } = req.params;
+    const user = req.user;
+
+    const { title, content, slug, tags, summery, category, readingTime, seoTitle, seoDescription, publishNow } =
+      req.body;
+
+    if (!isValidObjectId(id)) {
+      return errorResponse(res, 409, "آیدی وارد شده صحیح نمی باشد.");
+    }
+
+    const mainArticle = await Article.findById(id);
+    if (!mainArticle) {
+      return errorResponse(res, 404, "مقاله ای جهت ویرایش پیدا نشد.");
+    }
+
+    if (user.role === "AUTHOR" && mainArticle.author !== user._id) {
+      return errorResponse(res, 403, "شما مجاز به آپدیت این مقاله نیستید.");
+    }
+
+    if (title) mainArticle.title = title;
+    if (content) mainArticle.content = content;
+    if (slug) mainArticle.slug = slug;
+    if (summery) mainArticle.summery = summery;
+    if (readingTime) mainArticle.readingTime = readingTime;
+    if (seoTitle) mainArticle.seoTitle = seoTitle;
+    if (seoDescription) mainArticle.seoDescription = seoDescription;
+    if (publishNow) mainArticle.isPublished = publishNow;
+
+    if (tags) {
+      const currentTags = mainArticle.tags || [];
+      const newTags = Array.isArray(tags) ? tags : [tags];
+      mainArticle.tags = Array.from(new Set([...currentTags, ...newTags]));
+    }
+
+    if (category) {
+      const currentCategories = mainArticle.category || [];
+      const newCategories = Array.isArray(category) ? category : [category];
+      mainArticle.category = Array.from(new Set([...currentCategories, ...newCategories]));
+    }
+
+    if (req.files) {
+      let images = req.files.map((images) => `${process.env.DOMAIN}/public/images/articles/${images.filename}`);
+
+      mainArticle.images = [...mainArticle.images, ...images];
+    }
+
+    await mainArticle.save();
+
+    return successResponse(res, 200, "مقاله با موفقیت ویرایش شد.");
   } catch (error) {
     next(error);
   }

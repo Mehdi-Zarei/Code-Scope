@@ -32,7 +32,7 @@ router.route("/").get(optionalAuthGuard, getAll);
 router.route("/:id/:slug").get(optionalAuthGuard, getOne);
 router.route("/update/:id").patch(authGuard(["ADMIN", "AUTHOR"]), upload.array("images", 10), update);
 router.route("/remove/:id").delete(authGuard(["ADMIN", "AUTHOR"]), remove);
-router.route("/publish/:id").patch(authGuard(), changePublishStatus);
+router.route("/publish/:id").patch(authGuard(["ADMIN", "AUTHOR"]), changePublishStatus);
 router.route("/like/:id").post(authGuard(), toggleLikeArticles);
 
 module.exports = router;

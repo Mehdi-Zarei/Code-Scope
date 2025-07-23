@@ -1,0 +1,476 @@
+paths:
+  /articles:
+    get:
+      summary: Get article list
+      description: This route is used to get the list of articles. If the user is authenticated and has the ADMIN role, they will get all the articles. Otherwise, only published articles (isPublished true) will be displayed.
+      tags:
+        - Articles
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: شماره صفحه
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+          description: تعداد آیتم در هر صفحه
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: لیست مقالات با موفقیت دریافت شد.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      articles:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            _id:
+                              type: string
+                              example: "60c72b2f5f1b2c001c8d4567"
+                            title:
+                              type: string
+                            author:
+                              type: object
+                              properties:
+                                _id:
+                                  type: string
+                                name:
+                                  type: string
+                            tags:
+                              type: array
+                              items:
+                                type: string
+                            category:
+                              type: array
+                              items:
+                                type: string
+                            summery:
+                              type: string
+                            readingTime:
+                              type: number
+                            images:
+                              type: array
+                              items:
+                                type: string
+                            isPublished:
+                              type: boolean
+                            createdAt:
+                              type: string
+                              format: date-time
+                      pagination:
+                        type: object
+                        properties:
+                          currentPage:
+                            type: integer
+                          totalPages:
+                            type: integer
+                          totalItems:
+                            type: integer
+                          model:
+                            type: string
+                            example: "Articles"
+    post:
+      summary: Create new article
+      description: Only users with the ADMIN or AUTHOR role are allowed to create articles. This request is of type multipart/form-data and includes uploading article images.
+      tags:
+        - Articles
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  example: "تست روانشناسی"
+                content:
+                  type: string
+                  example: "محتوای تستی مقاله"
+                slug:
+                  type: string
+                  example: "slug test"
+                tags:
+                  type: array
+                  items:
+                    type: string
+                  example:
+                    - "روانشناسی"
+                    - "بالینی"
+                category:
+                  type: array
+                  items:
+                    type: string
+                  example:
+                    - "درمان"
+                    - "کودک"
+                summery:
+                  type: string
+                  example: "خلاصه‌ای کوتاه از مقاله"
+                readingTime:
+                  type: number
+                  example: 5
+                seoTitle:
+                  type: string
+                  example: "سئو مقاله"
+                seoDescription:
+                  type: string
+                  example: "توضیحات سئو"
+                publishNow:
+                  type: boolean
+                  example: true
+                images:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+            encoding:
+              tags:
+                style: form
+                explode: true
+              category:
+                style: form
+                explode: true
+              images:
+                style: form
+                explode: true
+      responses:
+        201:
+          description: مقاله با موفقیت ایجاد شد.
+        400:
+          description: خطای اعتبارسنجی.
+        401:
+          description: عدم احراز هویت.
+        403:
+          description: دسترسی غیرمجاز.
+
+/articles/{id}/{slug}:
+  get:
+    summary: Get article by ID and slug
+    description: >
+      Retrieve a single article by its MongoDB ObjectId and slug.  
+      If the provided slug does not match the article's slug, it redirects to the correct URL.  
+      Optional authentication is supported.  
+      Returns article details along with a boolean indicating whether the current user liked the article.
+    tags:
+      - Articles
+    parameters:
+      - name: id
+        in: path
+        description: The MongoDB ObjectId of the article
+        required: true
+        schema:
+          type: string
+          example: "60c72b2f5f1b2c001c8d4567"
+      - name: slug
+        in: path
+        description: The slug of the article
+        required: true
+        schema:
+          type: string
+          example: "psychology-test-article"
+    security:
+      - bearerAuth: [] # optional authentication
+    responses:
+      200:
+        description: Article retrieved successfully
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                article:
+                  type: object
+                  properties:
+                    _id:
+                      type: string
+                      example: "60c72b2f5f1b2c001c8d4567"
+                    title:
+                      type: string
+                      example: "Psychology Test Article"
+                    content:
+                      type: string
+                      example: "This is the content of the article."
+                    author:
+                      type: object
+                      properties:
+                        _id:
+                          type: string
+                          example: "60c72b1f4f1b2c001c8d1234"
+                        name:
+                          type: string
+                          example: "John Doe"
+                    tags:
+                      type: array
+                      items:
+                        type: string
+                      example: ["psychology", "clinical"]
+                    category:
+                      type: array
+                      items:
+                        type: string
+                      example: ["therapy", "child"]
+                    summery:
+                      type: string
+                      example: "A brief summary of the article."
+                    readingTime:
+                      type: number
+                      example: 5
+                    images:
+                      type: array
+                      items:
+                        type: string
+                      example: ["image1.jpg", "image2.jpg"]
+                    isPublished:
+                      type: boolean
+                      example: true
+                    createdAt:
+                      type: string
+                      format: date-time
+                      example: "2024-04-27T10:00:00Z"
+                isLiked:
+                  type: boolean
+                  description: Indicates if the authenticated user liked the article
+                  example: false
+      404:
+        description: Article not found
+      409:
+        description: Invalid article ID
+
+/articles/update/{id}:
+  patch:
+    summary: Update an existing article
+    description: >
+      Update the article identified by the given ID.  
+      Only users with roles ADMIN or AUTHOR are allowed.  
+      AUTHORS can only update their own articles.  
+      Supports uploading up to 10 images as multipart/form-data.  
+      Returns success message upon successful update.
+    tags:
+      - Articles
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        description: The MongoDB ObjectId of the article to update
+        required: true
+        schema:
+          type: string
+          example: "60c72b2f5f1b2c001c8d4567"
+    requestBody:
+      required: true
+      content:
+        multipart/form-data:
+          schema:
+            type: object
+            properties:
+              title:
+                type: string
+                description: The title of the article
+                example: "Updated Psychology Article"
+              content:
+                type: string
+                description: The main content of the article
+                example: "This is the updated content."
+              slug:
+                type: string
+                description: URL-friendly slug for the article
+                example: "updated-psychology-article"
+              tags:
+                type: array
+                description: Array of tags
+                items:
+                  type: string
+                example: ["psychology", "research"]
+              summery:
+                type: string
+                description: Brief summary of the article
+                example: "A concise summary."
+              category:
+                type: array
+                description: Array of categories
+                items:
+                  type: string
+                example: ["therapy", "child"]
+              readingTime:
+                type: integer
+                description: Estimated reading time in minutes
+                example: 7
+              seoTitle:
+                type: string
+                description: SEO title for better search ranking
+                example: "SEO Optimized Title"
+              seoDescription:
+                type: string
+                description: SEO description for search engines
+                example: "This is an SEO description."
+              publishNow:
+                type: boolean
+                description: Whether to publish the article immediately
+                example: true
+              images:
+                type: array
+                description: Up to 10 images to upload
+                items:
+                  type: string
+                  format: binary
+    responses:
+      200:
+        description: Article updated successfully
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: "Article updated successfully."
+      403:
+        description: Forbidden - user not authorized to update this article
+      404:
+        description: Article not found
+      409:
+        description: Invalid article ID
+
+/articles/remove/{id}:
+  delete:
+    summary: Delete an article by ID
+    description: >
+      Deletes the article identified by the given ID.  
+      Only users with roles ADMIN or AUTHOR can delete articles.  
+      AUTHORS can only delete their own articles.
+    tags:
+      - Articles
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        description: The MongoDB ObjectId of the article to delete
+        required: true
+        schema:
+          type: string
+          example: "60c72b2f5f1b2c001c8d4567"
+    responses:
+      200:
+        description: Article deleted successfully
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: "Article deleted successfully."
+      403:
+        description: Forbidden - user not authorized to delete this article
+      404:
+        description: Article not found
+      409:
+        description: Invalid article ID
+
+/articles/publish/{id}:
+  patch:
+    summary: Toggle article publish status
+    description: >
+      Toggle the publish status of an article by its ID.  
+      ADMIN users can change any article, AUTHORS only their own articles.
+    tags:
+      - Articles
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: MongoDB ObjectId of the article
+        schema:
+          type: string
+          example: "60c72b2f5f1b2c001c8d4567"
+
+    responses:
+      200:
+        description: Publish status changed successfully
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: "Article published successfully."
+      403:
+        description: Forbidden - user unauthorized to update this article
+      404:
+        description: Article not found
+      409:
+        description: Invalid article ID
+
+/articles/like/{id}:
+  post:
+    summary: Toggle like on an article
+    description: >
+      Toggles the like status of an article for the authenticated user.
+      If the article is already liked by the user, it removes the like.
+      Otherwise, it adds a like.
+    tags:
+      - Articles
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        description: The ID of the article to like or unlike
+        required: true
+        schema:
+          type: string
+          example: "60d0fe4f5311236168a109ca"
+    responses:
+      200:
+        description: Like status toggled successfully
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: number
+                  example: 200
+                message:
+                  type: string
+                  example: "Article liked successfully."
+                data:
+                  type: object
+                  nullable: true
+      404:
+        description: Article not found
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ErrorResponse"
+      409:
+        description: Invalid article ID
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ErrorResponse"
+      401:
+        description: Unauthorized, authentication required

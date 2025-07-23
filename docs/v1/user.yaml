@@ -61,13 +61,16 @@ paths:
       requestBody:
         required: true
         content:
-          application/json:
+          application/x-www-form-urlencoded:
             schema:
               type: object
               properties:
                 newRole:
                   type: string
-                  enum: [ADMIN, USER, AUTHOR]
+                  enum:
+                    - ADMIN
+                    - USER
+                    - AUTHOR
               required:
                 - newRole
       responses:
