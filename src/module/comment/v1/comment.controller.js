@@ -88,6 +88,54 @@ exports.getOne = async (req, res, next) => {
 
 exports.articleComments = async (req, res, next) => {
   try {
+    const { page = 1, limit = 10 } = req.query;
+    const { articleId } = req.params;
+
+    if (!isValidObjectId(articleId)) {
+      return errorResponse(res, 409, "شناسه کامنت معتبر نمی باشد.");
+    }
+
+    const article = await Article.findById(articleId);
+    if (!article) {
+      return errorResponse(res, 404, "مقاله ای یافت نشد.");
+    }
+
+    const articleComments = await Comment.find({ articleId, status: "APPROVED" })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .populate("userId", "name")
+      .lean();
+
+    if (!articleComments.length) {
+      return successResponse(res, 200, "اولین نفری باشید که برای این مقاله نظر میدهید.");
+    }
+
+    const commentMap = {};
+    let tree = [];
+
+    articleComments.forEach((comment) => {
+      comment.replies = [];
+      commentMap[comment._id.toString()] = comment;
+    });
+
+    articleComments.forEach((comment) => {
+      if (comment.parentId) {
+        const parent = commentMap[comment.parentId.toString()];
+        if (parent) {
+          parent.replies.push(comment);
+        }
+      } else {
+        tree.push(comment);
+      }
+    });
+
+    tree = articleComments.filter((comment) => !comment.parentId);
+
+    const pagination = createPagination(page, limit, articleComments.length, "Comments");
+
+    return successResponse(res, 200, { articleComments: tree, pagination });
+
+    return;
   } catch (error) {
     next(error);
   }
