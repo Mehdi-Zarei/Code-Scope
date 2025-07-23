@@ -2,9 +2,24 @@ const { errorResponse, successResponse } = require("../../../helper/responseMess
 const Comment = require("../../../model/Comment");
 const Article = require("../../../model/Article");
 const { isValidObjectId } = require("mongoose");
+const { createPagination } = require("../../../helper/pagination");
 
 exports.getAll = async (req, res, next) => {
   try {
+    const { page = 1, limit = 10 } = req.query;
+
+    const comments = await Comment.find({})
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .lean();
+
+    if (!comments.length) {
+      return successResponse(res, 200, "کامنتی یافت نشد");
+    }
+
+    const pagination = createPagination(page, limit, comments.length, "Comments");
+
+    return successResponse(res, 200, { comments, pagination });
   } catch (error) {
     next(error);
   }
