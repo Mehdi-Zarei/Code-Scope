@@ -11,6 +11,7 @@ const { errorHandler } = require("./middleware/errorHandler");
 const authRoutes = require("./module/auth/v1/auth.routes");
 const userRoutes = require("./module/user/v1/user.routes.js");
 const articleRoutes = require("./module/article/v1/article.route.js");
+const commentRoutes = require("./module/comment/v1/comment.routes.js");
 const { redirectToArticlePage } = require("./module/article/v1/shortIdentifier.controller.js");
 
 //* Swagger Doc
@@ -27,6 +28,7 @@ app.use("/public", express.static(path.join(__dirname, "..", "public")));
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/users", userRoutes);
 app.use("/api/v1/articles", articleRoutes);
+app.use("/api/v1/comments", commentRoutes);
 app.get("/api/v1/p/:shortIdentifier", redirectToArticlePage);
 app.use("/apis/v1/swagger", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
