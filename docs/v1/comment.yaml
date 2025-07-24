@@ -1,0 +1,628 @@
+openapi: 3.0.3
+info:
+  title: Comments API
+  version: 1.0.0
+  description: API برای مدیریت نظرات مقالات
+
+paths:
+  /comments:
+    get:
+      summary: دریافت لیست تمام کامنت‌ها
+      tags:
+        - Comments
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: شماره صفحه
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+          description: تعداد آیتم‌ها در هر صفحه
+      responses:
+        200:
+          description: موفقیت در دریافت لیست کامنت‌ها
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    oneOf:
+                      - type: string
+                      - type: object
+                        properties:
+                          comments:
+                            type: array
+                            items:
+                              $ref: "#/components/schemas/Comment"
+                          pagination:
+                            $ref: "#/components/schemas/Pagination"
+        400:
+          description: خطا در اعتبارسنجی
+        401:
+          description: عدم احراز هویت
+        403:
+          description: دسترسی غیرمجاز (فقط مدیر)
+
+    post:
+      summary: ارسال نظر جدید برای مقاله
+      tags:
+        - Comments
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required:
+                - articleId
+                - content
+                - score
+              properties:
+                articleId:
+                  type: string
+                  description: شناسه مقاله
+                  default: 60b8d6c3b1e4f2a9d8f9c123
+                parentId:
+                  type: string
+                  description: شناسه کامنت اصلی (در صورت پاسخ)
+                  example: 60b8d6c3b1e4f2a9d8f9c456
+                content:
+                  type: string
+                  description: متن نظر
+                  example: "این مقاله بسیار مفید بود"
+                score:
+                  type: integer
+                  description: امتیاز مقاله از ۱ تا ۵
+                  example: 5
+      responses:
+        201:
+          description: کامنت با موفقیت ثبت شد (در انتظار تایید)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        400:
+          description: خطا در اعتبارسنجی یا ورودی نامعتبر
+        401:
+          description: احراز هویت نشده
+        404:
+          description: مقاله یا کامنت والد یافت نشد
+        409:
+          description: کامنت تکراری توسط کاربر
+  /comments/{commentId}:
+    get:
+      tags:
+        - Comments
+      summary: دریافت یک کامنت خاص با شناسه
+      description: این مسیر فقط توسط ادمین قابل استفاده است و برای دریافت اطلاعات یک کامنت خاص به همراه اطلاعات مقاله و کاربر کاربرد دارد.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: commentId
+          in: path
+          required: true
+          description: شناسه کامنت (ObjectId معتبر)
+          schema:
+            type: string
+            pattern: "^[a-fA-F0-9]{24}$"
+            default: 60b8d6c3b1e4f2a9d8f9c123
+      responses:
+        "200":
+          description: اطلاعات کامنت با موفقیت دریافت شد
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: object
+                    properties:
+                      _id:
+                        type: string
+                        example: 60b8d6c3b1e4f2a9d8f9c123
+                      articleId:
+                        type: object
+                        properties:
+                          _id:
+                            type: string
+                            example: 60b8d6c3b1e4f2a9d8f9c321
+                          title:
+                            type: string
+                            example: عنوان مقاله
+                      userId:
+                        type: object
+                        properties:
+                          _id:
+                            type: string
+                            example: 60b8d6c3b1e4f2a9d8f9c222
+                          name:
+                            type: string
+                            example: مهدی
+                      parentId:
+                        type: object
+                        nullable: true
+                        properties:
+                          _id:
+                            type: string
+                            example: 60b8d6c3b1e4f2a9d8f9c333
+                          content:
+                            type: string
+                            example: این یک کامنت اصلی است
+                      content:
+                        type: string
+                        example: این نظر من درباره مقاله بود.
+                      status:
+                        type: string
+                        enum: [APPROVED, PENDING, REJECTED]
+                        example: APPROVED
+                      likes:
+                        type: object
+                        properties:
+                          count:
+                            type: integer
+                            example: 4
+                      score:
+                        type: integer
+                        example: 5
+                      createdAt:
+                        type: string
+                        format: date-time
+                        example: 2025-07-23T17:00:05.663Z
+                      updatedAt:
+                        type: string
+                        format: date-time
+                        example: 2025-07-23T17:33:14.640Z
+        "404":
+          description: کامنتی با این شناسه یافت نشد
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: شناسه وارد شده معتبر نیست
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /comments/article/{articleId}:
+    get:
+      tags:
+        - Comments
+      summary: دریافت کامنت‌های تاییدشده برای یک مقاله خاص
+      description: این مسیر برای دریافت کامنت‌های یک مقاله خاص است که وضعیت آن‌ها "APPROVED" باشد. کامنت‌ها به صورت درختی (در صورت وجود پاسخ) بازگردانده می‌شوند.
+      parameters:
+        - name: articleId
+          in: path
+          required: true
+          description: شناسه مقاله (باید یک ObjectId معتبر باشد)
+          schema:
+            type: string
+            pattern: "^[a-fA-F0-9]{24}$"
+            default: 60b8d6c3b1e4f2a9d8f9c999
+        - name: page
+          in: query
+          required: false
+          description: شماره صفحه (پیش‌فرض 1)
+          schema:
+            type: integer
+            example: 1
+        - name: limit
+          in: query
+          required: false
+          description: تعداد آیتم در هر صفحه (پیش‌فرض 10)
+          schema:
+            type: integer
+            example: 10
+      responses:
+        "200":
+          description: لیست کامنت‌های مقاله با موفقیت بازیابی شد
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: object
+                    properties:
+                      articleComments:
+                        type: array
+                        description: لیستی از کامنت‌های تایید شده به صورت درختی
+                        items:
+                          type: object
+                          properties:
+                            _id:
+                              type: string
+                              example: 60c7f9b2c1f2f2a9d8f9c123
+                            userId:
+                              type: object
+                              properties:
+                                _id:
+                                  type: string
+                                  example: 60b8d6c3b1e4f2a9d8f9c111
+                                name:
+                                  type: string
+                                  example: مریم
+                            content:
+                              type: string
+                              example: مقاله خیلی مفیدی بود، ممنونم.
+                            parentId:
+                              type: string
+                              nullable: true
+                              example: null
+                            replies:
+                              type: array
+                              items:
+                                $ref: "#/components/schemas/CommentReply"
+                            createdAt:
+                              type: string
+                              format: date-time
+                              example: 2025-07-23T17:30:00.000Z
+                      pagination:
+                        $ref: "#/components/schemas/Pagination"
+        "404":
+          description: مقاله‌ای با این شناسه یافت نشد
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: شناسه مقاله معتبر نیست
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /comments/{commentId}/status:
+    patch:
+      summary: تغییر وضعیت کامنت
+      tags:
+        - Comments
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: commentId
+          in: path
+          description: شناسه کامنت (MongoDB ObjectId)
+          required: true
+          schema:
+            type: string
+            example: 64a7b4f22d7e9e1234567890
+      requestBody:
+        description: وضعیت جدید کامنت
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  description: وضعیت جدید کامنت ("PENDING", "APPROVED", "REJECTED" )
+                  example: active
+              required:
+                - status
+      responses:
+        200:
+          description: عملیات با موفقیت انجام شد.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  message:
+                    type: string
+                    example: عملیات با موفقیت انجام شد.
+        404:
+          description: کامنتی با این شناسه یافت نشد.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: error
+                  message:
+                    type: string
+                    example: کامنتی با این شناسه یافت نشد.
+        409:
+          description: شناسه کامنت معتبر نمی باشد.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: error
+                  message:
+                    type: string
+                    example: شناسه کامنت معتبر نمی باشد.
+        401:
+          description: دسترسی غیرمجاز (نیاز به احراز هویت مدیر)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: error
+                  message:
+                    type: string
+                    example: دسترسی غیرمجاز
+      securitySchemes:
+        bearerAuth:
+          type: http
+          scheme: bearer
+          bearerFormat: JWT
+
+  /comments/{commentId}/remove:
+    delete:
+      summary: حذف کامنت
+      tags:
+        - Comments
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: commentId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: شناسه کامنت
+      responses:
+        "200":
+          $ref: "#/components/responses/CommentRemoved"
+        "404":
+          $ref: "#/components/responses/CommentNotFound"
+        "409":
+          $ref: "#/components/responses/InvalidCommentId"
+
+  /comments/{commentId}/like:
+    post:
+      summary: لایک یا برداشتن لایک کامنت
+      tags:
+        - Comments
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: commentId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: شناسه کامنت
+      responses:
+        "200":
+          $ref: "#/components/responses/CommentLikedOrUnliked"
+        "404":
+          $ref: "#/components/responses/CommentNotFound"
+        "409":
+          $ref: "#/components/responses/InvalidCommentId"
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    ChangeStatusRequest:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          description: وضعیت جدید کامنت
+          enum:
+            - PENDING
+            - APPROVED
+            - REJECTED
+          example: APPROVED
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: شناسه کامنت معتبر نمی باشد.
+
+    SuccessMessage:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: عملیات با موفقیت انجام شد.
+
+  responses:
+    InvalidCommentId:
+      description: شناسه کامنت نامعتبر است.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
+    CommentNotFound:
+      description: کامنت یافت نشد.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
+    CommentRemoved:
+      description: کامنت با موفقیت حذف شد.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/SuccessMessage"
+
+    CommentStatusChanged:
+      description: وضعیت کامنت با موفقیت تغییر یافت.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/SuccessMessage"
+
+    CommentLikedOrUnliked:
+      description: لایک یا برداشتن لایک با موفقیت انجام شد.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/SuccessMessage"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Comment:
+      type: object
+      properties:
+        _id:
+          type: string
+          description: شناسه کامنت
+          example: 60b8d6c3b1e4f2a9d8f9c999
+        articleId:
+          type: string
+          example: 60b8d6c3b1e4f2a9d8f9c123
+        userId:
+          type: object
+          properties:
+            _id:
+              type: string
+              example: 60b8d6c3b1e4f2a9d8f9c321
+            name:
+              type: string
+              example: مهدی
+        parentId:
+          type: string
+          nullable: true
+          example: 60b8d6c3b1e4f2a9d8f9c456
+        content:
+          type: string
+          example: این یک کامنت تستی است
+        status:
+          type: string
+          enum: [PENDING, APPROVED, REJECTED]
+          example: APPROVED
+        likes:
+          type: object
+          properties:
+            count:
+              type: integer
+              example: 0
+            users:
+              type: array
+              items:
+                type: string
+        score:
+          type: integer
+          minimum: 1
+          maximum: 5
+          example: 4
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Pagination:
+      type: object
+      properties:
+        total:
+          type: integer
+          example: 14
+        page:
+          type: integer
+          example: 1
+        limit:
+          type: integer
+          example: 10
+        hasNextPage:
+          type: boolean
+          example: true
+        hasPrevPage:
+          type: boolean
+          example: false
+
+    CommentReply:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: 60c7f9b2c1f2f2a9d8f9c222
+        userId:
+          type: object
+          properties:
+            _id:
+              type: string
+              example: 60b8d6c3b1e4f2a9d8f9c111
+            name:
+              type: string
+              example: احمد
+        content:
+          type: string
+          example: پاسخ به نظر بالا
+        parentId:
+          type: string
+          example: 60c7f9b2c1f2f2a9d8f9c123
+        replies:
+          type: array
+          items:
+            $ref: "#/components/schemas/CommentReply"
+        createdAt:
+          type: string
+          format: date-time
+          example: 2025-07-23T17:31:00.000Z
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: شناسه مقاله معتبر نمی‌باشد.
