@@ -3,10 +3,16 @@ const Comment = require("../../../model/Comment");
 const Article = require("../../../model/Article");
 const { isValidObjectId } = require("mongoose");
 const { createPagination } = require("../../../helper/pagination");
+const { paginationSchema } = require("./comment.validator");
 
 exports.getAll = async (req, res, next) => {
   try {
     const { page = 1, limit = 10 } = req.query;
+
+    const { error } = paginationSchema.validate(req.query);
+    if (error) {
+      return res.status(400).json({ success: false, message: error.details[0].message });
+    }
 
     const comments = await Comment.find({})
       .skip((page - 1) * limit)
@@ -90,6 +96,11 @@ exports.articleComments = async (req, res, next) => {
   try {
     const { page = 1, limit = 10 } = req.query;
     const { articleId } = req.params;
+
+    const { error } = paginationSchema.validate(req.query);
+    if (error) {
+      return res.status(400).json({ success: false, message: error.details[0].message });
+    }
 
     if (!isValidObjectId(articleId)) {
       return errorResponse(res, 409, "شناسه کامنت معتبر نمی باشد.");
