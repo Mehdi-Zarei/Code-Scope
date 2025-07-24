@@ -42,4 +42,19 @@ const updateCommentStatusSchema = Joi.object({
   }),
 });
 
-module.exports = { createCommentSchema, updateCommentStatusSchema };
+const paginationSchema = Joi.object({
+  page: Joi.number().integer().min(1).default(1).messages({
+    "number.base": "شماره صفحه باید یک عدد باشد.",
+    "number.integer": "شماره صفحه باید یک عدد صحیح باشد.",
+    "number.min": "شماره صفحه نمی‌تواند کمتر از ۱ باشد.",
+  }),
+
+  limit: Joi.number().integer().min(1).max(100).default(10).messages({
+    "number.base": "تعداد آیتم در هر صفحه باید یک عدد باشد.",
+    "number.integer": "تعداد آیتم باید عدد صحیح باشد.",
+    "number.min": "حداقل تعداد آیتم در هر صفحه ۱ است.",
+    "number.max": "حداکثر تعداد آیتم در هر صفحه ۱۰۰ است.",
+  }),
+});
+
+module.exports = { createCommentSchema, updateCommentStatusSchema, paginationSchema };
