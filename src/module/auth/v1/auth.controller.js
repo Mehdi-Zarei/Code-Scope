@@ -76,7 +76,7 @@ exports.login = async (req, res, next) => {
 
 exports.refreshToken = async (req, res, next) => {
   try {
-    const token = req.cookies.refreshToken;
+    const token = req.signedCookies.refreshToken;
     if (!token) {
       return errorResponse(res, 401, "لطفا وارد حساب کاربری خود شوید.");
     }
