@@ -1,6 +1,8 @@
 const { isValidObjectId } = require("mongoose");
 const { errorResponse, successResponse } = require("../../../helper/responseMessage");
 const User = require("../../../model/User");
+const Comment = require("../../../model/Comment");
+const Article = require("../../../model/Article");
 const { createPagination } = require("../../../helper/pagination");
 const { paginationQuerySchema } = require("./user.validator");
 
@@ -76,9 +78,10 @@ exports.getMe = async (req, res, next) => {
   try {
     const user = req.user;
 
-    //TODO : user comment, user article ...
+    const userComments = await Comment.find({ userId: user._id });
+    const userArticle = await Article.find({ author: user._id });
 
-    return successResponse(res, 200, user);
+    return successResponse(res, 200, { user, userComments, userArticle });
   } catch (error) {
     next(error);
   }
