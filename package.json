@@ -6,7 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "node ./src/server.js",
-    "start": "node ./src/server.js"
+    "start": "node ./src/server.js",
+    "seed:users": "./seeders/users.js"
   },
   "keywords": [],
   "author": "",
@@ -28,5 +29,8 @@
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
     "uuid": "^11.1.0"
+  },
+  "devDependencies": {
+    "migrate-mongo": "^12.1.3"
   }
 }
