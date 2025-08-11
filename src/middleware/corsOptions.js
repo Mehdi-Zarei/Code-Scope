@@ -1,4 +1,7 @@
-const allowedOrigins = [process.env.DOMAIN || "http://localhost:3000"];
+const allowedOrigins = [
+  "http://localhost:3000",
+  process.env.DOMAIN // Optional: add any domain from .env
+].filter(Boolean); // remove undefined values
 
 exports.corsOptions = {
   origin: function (origin, callback) {
